@@ -1,0 +1,7 @@
+Flask>=3.0
+Flask-WTF
+Flask-Login
+SQLAlchemy
+pyodbc
+urllib3
+pandas
