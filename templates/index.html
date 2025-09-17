@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bullet Journal - Index </title>
+    <link rel="stylesheet" href="/static/css/index.css">
+</head>
+<body>
+   <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">T</div>
+            <h1 class="header-title">TaskManager</h1>
+        </div>
+        <div class="header-right">
+            <span class="welcome-text">
+                Bienvenido, <span class="user-name">María González</span>
+            </span>
+            <div class="avatar" onclick="toggleDropdown()">
+                MG
+                <div class="dropdown" id="userDropdown">
+                    <div class="dropdown-item">
+                        <span>👤</span>
+                        <span>Perfil</span>
+                    </div>
+                    <div class="dropdown-item">
+                        <span>⚙️</span>
+                        <span>Configuración</span>
+                    </div>
+                    <div class="dropdown-item" onclick="logout()">
+                        <span>🚪</span>
+                        <span>Cerrar sesión</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="nav-item active" onclick="setActiveSection('tasks')">
+            <span class="nav-icon">📋</span>
+            <div class="nav-content">
+                <div class="nav-title">Tareas</div>
+                <div class="nav-description">Gestionar tareas</div>
+            </div>
+        </div>
+        <div class="nav-item" onclick="setActiveSection('categories')">
+            <span class="nav-icon">📁</span>
+            <div class="nav-content">
+                <div class="nav-title">Categorías</div>
+                <div class="nav-description">Organizar por tipo</div>
+            </div>
+        </div>
+        <div class="nav-item" onclick="setActiveSection('statistics')">
+            <span class="nav-icon">📊</span>
+            <div class="nav-content">
+                <div class="nav-title">Estadísticas</div>
+                <div class="nav-description">Ver progreso</div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="content-grid">
+            <!-- Task Area -->
+            <div class="task-section">
+                <!-- Tasks Section -->
+                <div id="tasksSection">
+                    <h2 class="section-title">Gestión de Tareas</h2>
+                    
+                    <!-- Task Form -->
+                    <div class="task-form">
+                        <form id="taskForm">
+                            <div class="form-group">
+                                <label class="form-label">Título de la tarea</label>
+                                <input type="text" class="form-input" id="taskTitle" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Descripción</label>
+                                <textarea class="form-textarea" id="taskDescription"></textarea>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Fecha límite</label>
+                                    <input type="date" class="form-input" id="taskDueDate">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Prioridad</label>
+                                    <select class="form-select" id="taskPriority">
+                                        <option value="low">Baja</option>
+                                        <option value="medium">Media</option>
+                                        <option value="high">Alta</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Categoría</label>
+                                <input type="text" class="form-input" id="taskCategory" placeholder="Ej: Trabajo, Personal">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Agregar Tarea</button>
+                        </form>
+                    </div>
+
+                    <!-- Task List -->
+                    <div class="task-list" id="taskList">
+                        <!-- Tasks will be rendered here -->
+                    </div>
+                </div>
+
+                <!-- Categories Section -->
+                <div id="categoriesSection" class="hidden">
+                    <h2 class="section-title">Categorías</h2>
+                    <div id="categoriesList">
+                        <!-- Categories will be rendered here -->
+                    </div>
+                </div>
+
+                <!-- Statistics Section -->
+                <div id="statisticsSection" class="hidden">
+                    <h2 class="section-title">Estadísticas</h2>
+                    <div class="stats-grid" id="statsGrid">
+                        <!-- Stats will be rendered here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mini Calendar -->
+            <div class="calendar-section">
+                <div class="calendar-header">
+                    <button class="calendar-nav" onclick="changeMonth(-1)">‹</button>
+                    <h3 id="calendarTitle"></h3>
+                    <button class="calendar-nav" onclick="changeMonth(1)">›</button>
+                </div>
+                <div class="calendar-grid" id="calendarGrid">
+                    <!-- Calendar will be rendered here -->
+                </div>
+                <div class="task-count" id="taskCount">
+                    <!-- Task count will be shown here -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+
+    <script src="/static/js/index.js"></script>
+</body>
+</html>
