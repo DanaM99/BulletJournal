@@ -1,311 +1,265 @@
-// Global state
-let tasks = [
-    {
-        id: 1,
-        title: "Completar proyecto de diseño",
-        description: "Finalizar el diseño del dashboard",
-        dueDate: "2024-01-15",
-        priority: "high",
-        completed: false,
-        category: "Trabajo"
-    },
-    {
-        id: 2,
-        title: "Reunión con el equipo",
-        description: "Revisar avances del sprint",
-        dueDate: "2024-01-16",
-        priority: "medium",
-        completed: false,
-        category: "Reuniones"
-    },
-    {
-        id: 3,
-        title: "Actualizar documentación",
-        description: "Documentar nuevas funcionalidades",
-        dueDate: "2024-01-18",
-        priority: "low",
-        completed: true,
-        category: "Documentación"
-    }
-];
+// index.js
 
-let activeSection = 'tasks';
-let currentDate = new Date();
-
-// Initialize app
-document.addEventListener('DOMContentLoaded', function () {
-    renderTasks();
-    renderCalendar();
-    renderStats();
-    renderCategories();
+document.addEventListener('DOMContentLoaded', () => {
+    loadTasks();
+    loadCategories();
+    updateUserName();
 });
 
-// Header functions
+// Mostrar nombre del usuario
+function updateUserName() {
+    const userNameElem = document.querySelector('.user-name');
+    fetch('/home') 
+        .then(() => {
+            userNameElem.textContent = userNameElem.textContent || 'Usuario';
+        });
+}
+
+// Toggle del dropdown del avatar
 function toggleDropdown() {
-    const dropdown = document.getElementById('userDropdown');
-    dropdown.classList.toggle('show');
+    document.getElementById('userDropdown').classList.toggle('show');
 }
 
+// Logout
 function logout() {
-    alert('Cerrando sesión...');
-    // Aquí iría la lógica de logout
+    window.location.href = '/logout';
 }
 
-// Close dropdown when clicking outside
-document.addEventListener('click', function (event) {
-    const dropdown = document.getElementById('userDropdown');
-    const avatar = document.querySelector('.avatar');
-    if (!avatar.contains(event.target)) {
-        dropdown.classList.remove('show');
-    }
-});
-
-// Sidebar functions
-function setActiveSection(section) {
-    activeSection = section;
-
-    // Update nav items
-    document.querySelectorAll('.nav-item').forEach(item => {
-        item.classList.remove('active');
+// --- SECCIONES ---
+function setActiveSection(sectionId) {
+    const sections = ['tasksSection', 'categoriesSection', 'statisticsSection'];
+    sections.forEach(id => {
+        document.getElementById(id).classList.add('hidden');
     });
-    event.target.closest('.nav-item').classList.add('active');
+    document.getElementById(sectionId + 'Section').classList.remove('hidden');
 
-    // Show/hide sections
-    document.querySelectorAll('[id$="Section"]').forEach(section => {
-        section.classList.add('hidden');
-    });
-    document.getElementById(section + 'Section').classList.remove('hidden');
-
-    // Update content based on section
-    if (section === 'statistics') {
-        renderStats();
-    } else if (section === 'categories') {
-        renderCategories();
-    }
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(item => item.classList.remove('active'));
+    document.querySelector(`.nav-item[onclick="setActiveSection('${sectionId}')"]`).classList.add('active');
 }
 
-// Task functions
-document.getElementById('taskForm').addEventListener('submit', function (e) {
+// --- TAREAS ---
+document.getElementById('taskForm').addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const newTask = {
-        id: Date.now(),
-        title: document.getElementById('taskTitle').value,
-        description: document.getElementById('taskDescription').value,
-        dueDate: document.getElementById('taskDueDate').value,
-        priority: document.getElementById('taskPriority').value,
-        category: document.getElementById('taskCategory').value || 'General',
-        completed: false
-    };
+    const title = document.getElementById('taskTitle').value.trim();
+    const description = document.getElementById('taskDescription').value.trim();
+    const dueDate = document.getElementById('taskDueDate').value;
+    const priority = document.getElementById('taskPriority').value;
+    const category = document.getElementById('taskCategory').value.trim();
 
-    tasks.push(newTask);
-    renderTasks();
-    renderCalendar();
-    renderStats();
-    renderCategories();
+    if (!title) {
+        Swal.fire('Error', 'El título es obligatorio', 'error');
+        return;
+    }
 
-    // Reset form
-    this.reset();
+    try {
+        const res = await fetch('/api/tasks', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ title, description, dueDate, priority, category })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            Swal.fire('Éxito', data.message, 'success');
+            loadTasks();
+            document.getElementById('taskForm').reset();
+        } else {
+            Swal.fire('Error', data.message, 'error');
+        }
+    } catch (err) {
+        console.error(err);
+        Swal.fire('Error', 'No se pudo crear la tarea', 'error');
+    }
 });
 
-function renderTasks() {
-    const taskList = document.getElementById('taskList');
-    taskList.innerHTML = '';
+async function loadTasks() {
+    try {
+        const res = await fetch('/api/tasks');
+        const tasks = await res.json();
+        const taskList = document.getElementById('taskList');
+        taskList.innerHTML = '';
 
-    tasks.forEach(task => {
-        const taskElement = document.createElement('div');
-        taskElement.className = `task-item ${task.completed ? 'completed' : ''}`;
-
-        taskElement.innerHTML = `
-                    <div class="task-header">
-                        <div class="task-title ${task.completed ? 'completed' : ''}">${task.title}</div>
-                        <div class="task-actions">
-                            <button class="btn btn-secondary" onclick="toggleTask(${task.id})">
-                                ${task.completed ? '↩️' : '✅'}
-                            </button>
-                            <button class="btn btn-destructive" onclick="deleteTask(${task.id})">🗑️</button>
-                        </div>
-                    </div>
-                    <div class="task-description">${task.description}</div>
-                    <div class="task-meta">
-                        <span class="task-priority priority-${task.priority}">${getPriorityText(task.priority)}</span>
-                        <span class="task-category">${task.category}</span>
-                        ${task.dueDate ? `<span>📅 ${formatDate(task.dueDate)}</span>` : ''}
-                    </div>
-                `;
-
-        taskList.appendChild(taskElement);
-    });
-}
-
-function toggleTask(taskId) {
-    tasks = tasks.map(task =>
-        task.id === taskId ? { ...task, completed: !task.completed } : task
-    );
-    renderTasks();
-    renderStats();
-}
-
-function deleteTask(taskId) {
-    tasks = tasks.filter(task => task.id !== taskId);
-    renderTasks();
-    renderCalendar();
-    renderStats();
-    renderCategories();
-}
-
-function getPriorityText(priority) {
-    const priorities = {
-        low: 'Baja',
-        medium: 'Media',
-        high: 'Alta'
-    };
-    return priorities[priority] || priority;
-}
-
-function formatDate(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('es-ES');
-}
-
-// Calendar functions
-function renderCalendar() {
-    const calendarGrid = document.getElementById('calendarGrid');
-    const calendarTitle = document.getElementById('calendarTitle');
-
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-
-    calendarTitle.textContent = new Intl.DateTimeFormat('es-ES', {
-        month: 'long',
-        year: 'numeric'
-    }).format(currentDate);
-
-    // Clear calendar
-    calendarGrid.innerHTML = '';
-
-    // Add day headers
-    const dayHeaders = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-    dayHeaders.forEach(day => {
-        const dayHeader = document.createElement('div');
-        dayHeader.className = 'calendar-day-header';
-        dayHeader.textContent = day;
-        calendarGrid.appendChild(dayHeader);
-    });
-
-    // Get first day of month and number of days
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const daysInMonth = lastDay.getDate();
-    const startingDayOfWeek = firstDay.getDay();
-
-    // Add empty cells for days before month starts
-    for (let i = 0; i < startingDayOfWeek; i++) {
-        const emptyDay = document.createElement('div');
-        emptyDay.className = 'calendar-day other-month';
-        calendarGrid.appendChild(emptyDay);
-    }
-
-    // Add days of the month
-    const today = new Date();
-    for (let day = 1; day <= daysInMonth; day++) {
-        const dayElement = document.createElement('div');
-        dayElement.className = 'calendar-day';
-        dayElement.textContent = day;
-
-        const currentDay = new Date(year, month, day);
-
-        // Check if it's today
-        if (currentDay.toDateString() === today.toDateString()) {
-            dayElement.classList.add('today');
-        }
-
-        // Check if there are tasks on this day
-        const dayTasks = tasks.filter(task => {
-            if (!task.dueDate) return false;
-            const taskDate = new Date(task.dueDate);
-            return taskDate.toDateString() === currentDay.toDateString();
+        tasks.forEach(task => {
+            const taskDiv = document.createElement('div');
+            taskDiv.classList.add('task-item');
+            taskDiv.innerHTML = `
+                <h3>${task.title}</h3>
+                <p>${task.description || ''}</p>
+                <p>Categoría: ${task.category || 'Sin categoría'}</p>
+                <p>Prioridad: ${task.priority}</p>
+                <p>Estado: ${task.completed}</p>
+                <button onclick="deleteTask(${task.id})">Eliminar</button>
+            `;
+            taskList.appendChild(taskDiv);
         });
 
-        if (dayTasks.length > 0) {
-            dayElement.classList.add('has-tasks');
-        }
-
-        calendarGrid.appendChild(dayElement);
+        loadCategoriesIntoSelect();
+    } catch (err) {
+        console.error(err);
+        Swal.fire('Error', 'Error al cargar las tareas', 'error');
     }
-
-    // Update task count
-    const monthTasks = tasks.filter(task => {
-        if (!task.dueDate) return false;
-        const taskDate = new Date(task.dueDate);
-        return taskDate.getMonth() === month && taskDate.getFullYear() === year;
-    });
-
-    document.getElementById('taskCount').textContent =
-        `${monthTasks.length} tarea${monthTasks.length !== 1 ? 's' : ''} este mes`;
 }
 
-function changeMonth(direction) {
-    currentDate.setMonth(currentDate.getMonth() + direction);
-    renderCalendar();
+async function deleteTask(id) {
+    if (!confirm('¿Seguro quieres eliminar esta tarea?')) return;
+    try {
+        const res = await fetch(`/api/tasks/${id}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+            Swal.fire('Éxito', data.message, 'success');
+            loadTasks();
+        } else {
+            Swal.fire('Error', data.message, 'error');
+        }
+    } catch (err) {
+        console.error(err);
+        Swal.fire('Error', 'No se pudo eliminar la tarea', 'error');
+    }
 }
 
-// Statistics functions
-function renderStats() {
-    const statsGrid = document.getElementById('statsGrid');
+// --- CATEGORÍAS ---
+async function loadCategoriesIntoSelect() {
+    const categorySelect = document.getElementById('taskCategory');
+    categorySelect.innerHTML = '<option value="">Sin categoría</option>';
+    try {
+        const res = await fetch('/api/categories');
+        const categories = await res.json();
+        categories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category.nombre;
+            option.textContent = category.nombre;
+            categorySelect.appendChild(option);
+        });
+    } catch (err) {
+        console.error('Error loading categories:', err);
+    }
+}
 
-    const totalTasks = tasks.length;
-    const completedTasks = tasks.filter(task => task.completed).length;
-    const pendingTasks = totalTasks - completedTasks;
-    const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-
-    statsGrid.innerHTML = `
-                <div class="stat-card">
-                    <div class="stat-number">${totalTasks}</div>
-                    <div class="stat-label">Total de Tareas</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">${completedTasks}</div>
-                    <div class="stat-label">Completadas</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">${pendingTasks}</div>
-                    <div class="stat-label">Pendientes</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">${completionRate}%</div>
-                    <div class="stat-label">Tasa de Completado</div>
-                </div>
+async function loadCategories() {
+    try {
+        const res = await fetch('/api/categories');
+        const categories = await res.json();
+        const categoriesList = document.getElementById('categoriesList');
+        categoriesList.innerHTML = '';
+        categories.forEach(category => {
+            const categoryDiv = document.createElement('div');
+            categoryDiv.classList.add('category-item');
+            categoryDiv.innerHTML = `
+                <h4>${category.nombre}</h4>
+                <p>${category.descripcion || ''}</p>
+                <button onclick="editCategory(${category.id})">Editar</button>
+                <button onclick="deleteCategory(${category.id})">Eliminar</button>
             `;
+            categoriesList.appendChild(categoryDiv);
+        });
+    } catch (err) {
+        console.error('Error al cargar las categorías:', err);
+    }
 }
 
-// Categories functions
-function renderCategories() {
-    const categoriesList = document.getElementById('categoriesList');
-
-    // Get unique categories with task counts
-    const categoryStats = {};
-    tasks.forEach(task => {
-        const category = task.category || 'Sin categoría';
-        if (!categoryStats[category]) {
-            categoryStats[category] = { total: 0, completed: 0 };
-        }
-        categoryStats[category].total++;
-        if (task.completed) {
-            categoryStats[category].completed++;
+async function addCategory() {
+    const { value: formValues } = await Swal.fire({
+        title: 'Agregar Categoría',
+        html:
+            '<input id="swal-input1" class="swal2-input" placeholder="Nombre de la categoría">' +
+            '<input id="swal-input2" class="swal2-input" placeholder="Descripción (opcional)">',
+        focusConfirm: false,
+        preConfirm: () => {
+            return [
+                document.getElementById('swal-input1').value,
+                document.getElementById('swal-input2').value
+            ];
         }
     });
 
-    categoriesList.innerHTML = '';
+    if (formValues) {
+        const nombre = formValues[0].trim();
+        const descripcion = formValues[1].trim();
 
-    Object.entries(categoryStats).forEach(([category, stats]) => {
-        const categoryElement = document.createElement('div');
-        categoryElement.className = 'stat-card';
-        categoryElement.innerHTML = `
-                    <h3>${category}</h3>
-                    <div class="stat-number">${stats.total}</div>
-                    <div class="stat-label">${stats.completed} completadas</div>
-                `;
-        categoriesList.appendChild(categoryElement);
+        if (!nombre) {
+            Swal.fire('Error', 'El nombre de la categoría es obligatorio', 'error');
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/categories', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre, descripcion })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                Swal.fire('Éxito', 'Categoría agregada correctamente', 'success');
+                loadCategories();
+                loadCategoriesIntoSelect();
+            } else {
+                Swal.fire('Error', data.error || 'Error al agregar la categoría', 'error');
+            }
+        } catch (err) {
+            Swal.fire('Error', 'No se pudo agregar la categoría', 'error');
+        }
+    }
+}
+
+async function editCategory(id) {
+    const { value: formValues } = await Swal.fire({
+        title: 'Editar Categoría',
+        html:
+            '<input id="swal-input1" class="swal2-input" placeholder="Nuevo nombre">' +
+            '<input id="swal-input2" class="swal2-input" placeholder="Nueva descripción (opcional)">',
+        focusConfirm: false,
+        preConfirm: () => {
+            return [
+                document.getElementById('swal-input1').value,
+                document.getElementById('swal-input2').value
+            ];
+        }
     });
+
+    if (formValues) {
+        const nombre = formValues[0].trim();
+        const descripcion = formValues[1].trim();
+        
+        if (!nombre) {
+            Swal.fire('Error', 'El nombre es obligatorio', 'error');
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/categories/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre, descripcion })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                Swal.fire('Éxito', 'Categoría actualizada correctamente', 'success');
+                loadCategories();
+                loadCategoriesIntoSelect();
+            } else {
+                Swal.fire('Error', data.error || 'Error al actualizar la categoría', 'error');
+            }
+        } catch (err) {
+            Swal.fire('Error', 'No se pudo actualizar la categoría', 'error');
+        }
+    }
+}
+
+async function deleteCategory(id) {
+    if (!confirm('¿Seguro quieres eliminar esta categoría?')) return;
+    try {
+        const res = await fetch(`/api/categories/${id}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (res.ok) {
+            Swal.fire('Éxito', 'Categoría eliminada correctamente', 'success');
+            loadCategories();
+            loadCategoriesIntoSelect();
+        } else {
+            Swal.fire('Error', data.error || 'Error al eliminar la categoría', 'error');
+        }
+    } catch (err) {
+        Swal.fire('Error', 'No se pudo eliminar la categoría', 'error');
+    }
 }
