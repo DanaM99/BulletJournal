@@ -2,149 +2,143 @@
 <html lang="es">
 
 <head>
-       
     <meta charset="UTF-8">
-       
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Bullet Journal - Index </title>
-       
+    <title>TaskManager</title>
     <link rel="stylesheet" href="/static/css/index.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
-           <header class="header">
-                <div class="header-left">
-                        <div class="logo">T</div>
-                        <h1 class="header-title">TaskManager</h1>
-                    </div>
-                <div class="header-right">
-                        <span class="welcome-text">
-                                Bienvenido, <span class="user-name">María González</span>
-                            </span>
-                        <div class="avatar" onclick="toggleDropdown()">
-                                MG
-                                <div class="dropdown" id="userDropdown">
-                                        <div class="dropdown-item">
-                                                <span>👤</span>
-                                                <span>Perfil</span>
-                                            </div>
-                                        <div class="dropdown-item">
-                                                <span>⚙️</span>
-                                                <span>Configuración</span>
-                                            </div>
-                                        <div class="dropdown-item" onclick="logout()">
-                                                <span>🚪</span>
-                                                <span>Cerrar sesión</span>
-                                            </div>
-                                    </div>
-                            </div>
-                    </div>
-            </header>
+    <header class="header">
+            <div class="header-left">
+                    <div class="logo">T</div>
+                    <h1 class="header-title">Bullet Journal</h1>
+                </div>
+            <div class="header-right">
+                    <span class="welcome-text">
+                            ¡Hola, <span class="user-name">{{ username }}</span>!
+                        </span>
+                    <div class="avatar" onclick="toggleDropdown()">
+                            BJ
+                            <div class="dropdown" id="userDropdown">
+                                    <div class="dropdown-item" onclick="logout()">
+                                            <span>🚪</span>
+                                            <span>Cerrar sesión</span>
+                                        </div>
+                                </div>
+                        </div>
+                </div>
+    </header>
+    <nav class="sidebar" id="sidebar">
+        <div class="nav-item active" onclick="setActiveSection('tasks')">
+            <span class="nav-icon">📋</span>
+            <div class="nav-content">
+                <div class="nav-title">Tareas</div>
+                <div class="nav-description">Gestionar tus tareas</div>
+            </div>
+        </div>
+        <div class="nav-item" onclick="setActiveSection('categories')">
+            <span class="nav-icon">📁</span>
+            <div class="nav-content">
+                <div class="nav-title">Categorías</div>
+                <div class="nav-description">Organizar por tipo</div>
+            </div>
+        </div>
+        <div class="nav-item" onclick="setActiveSection('statistics')">
+            <span class="nav-icon">📊</span>
+            <div class="nav-content">
+                <div class="nav-title">Estadísticas</div>
+                <div class="nav-description">Ver tu progreso</div>
+            </div>
+        </div>
+    </nav>
 
-            <nav class="sidebar" id="sidebar">
-                <div class="nav-item active" onclick="setActiveSection('tasks')">
-                        <span class="nav-icon">📋</span>
-                        <div class="nav-content">
-                                <div class="nav-title">Tareas</div>
-                                <div class="nav-description">Gestionar tareas</div>
-                            </div>
-                    </div>
-                <div class="nav-item" onclick="setActiveSection('categories')">
-                        <span class="nav-icon">📁</span>
-                        <div class="nav-content">
-                                <div class="nav-title">Categorías</div>
-                                <div class="nav-description">Organizar por tipo</div>
-                            </div>
-                    </div>
-                <div class="nav-item" onclick="setActiveSection('statistics')">
-                        <span class="nav-icon">📊</span>
-                        <div class="nav-content">
-                                <div class="nav-title">Estadísticas</div>
-                                <div class="nav-description">Ver progreso</div>
-                            </div>
-                    </div>
-            </nav>
+    <main class="main-content">
+        <div class="content-grid">
+            <div class="main-column">
+                <div id="tasksSection">
+                    <h2 class="section-title">Gestión de Tareas</h2>
+                    <div class="task-form card">
+                        <form id="taskForm">
+                            <div class="form-group">
+                                <label class="form-label" for="taskTitle">Título de la tarea</label>
+                                <input type="text" class="form-input" id="taskTitle" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="taskDescription">Descripción</label>
+                                <textarea class="form-textarea" id="taskDescription"></textarea>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="taskDueDate">Fecha límite</label>
+                                    <input type="date" class="form-input" id="taskDueDate">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="taskPriority">Prioridad</label>
+                                    <select id="taskPriority" class="form-select">
+                                        <option value="low">Baja</option>
+                                        <option value="medium" selected>Media</option>
+                                        <option value="high">Alta</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="taskCategory">Categoría</label>
+                                <select class="form-select" id="taskCategory"></select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Agregar Tarea</button>
+                        </form>
+                    </div>
+                    <div class="task-list" id="taskList"></div>
+                </div>
 
-            <main class="main-content">
-                <div class="content-grid">
-                                    <div class="task-section">
-                                                <div id="tasksSection">
-                                        <h2 class="section-title">Gestión de Tareas</h2>
-                                       
-                                                            <div class="task-form">
-                                                <form id="taskForm">
-                                                        <div class="form-group">
-                                                                <label class="form-label">Título de la tarea</label>
-                                                                <input type="text" class="form-input" id="taskTitle"
-                                    required>
-                                                            </div>
-                                                        <div class="form-group">
-                                                                <label class="form-label">Descripción</label>
-                                                                <textarea class="form-textarea"
-                                    id="taskDescription"></textarea>
-                                                            </div>
-                                                        <div class="form-row">
-                                                                <div class="form-group">
-                                                                        <label class="form-label">Fecha límite</label>
-                                                                        <input type="date" class="form-input"
-                                        id="taskDueDate">
-                                                                    </div>
-                                                                <div class="form-group">
-                                                                        <label class="form-label">Prioridad</label>
-                                                                        <select class="form-select" id="taskPriority">
-                                                                                <option value="low">Baja</option>
-                                                                                <option value="medium">Media</option>
-                                                                                <option value="high">Alta</option>
-                                                                            </select>
-                                                                    </div>
-                                                            </div>
-                                                        <div class="form-group">
-                                                                <label class="form-label">Categoría</label>
-                                                                <select class="form-select" id="taskCategory"></select>
-                                                            </div>
-                                                        <button type="submit" class="btn btn-primary">Agregar
-                                Tarea</button>
-                                                    </form>
-                                            </div>
+                <div id="categoriesSection" class="hidden">
+                    <div class="section-header">
+                        <h2 class="section-title">Categorías</h2>
+                        <button class="btn btn-primary" onclick="addCategory()">+ Agregar Categoría</button>
+                    </div>
+                    <div id="categoriesList" class="categories-grid"></div>
+                </div>
 
-                                                            <div class="task-list" id="taskList">
-                                                                    </div>
-                                    </div>
+                <div id="statisticsSection" class="hidden">
+                    <h2 class="section-title">Estadísticas</h2>
+                    <div class="stats-grid" id="statsGrid">
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalTasksCount">0</div>
+                            <div class="stat-label">Tareas Totales</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="completedTasksCount">0</div>
+                            <div class="stat-label">Tareas Completadas</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="categoriesCount">0</div>
+                            <div class="stat-label">Categorías</div>
+                        </div>
+                    </div>
+                    <div class="chart-container card">
+                        <h3>Prioridad de Tareas</h3>
+                        <canvas id="priorityChart"></canvas>
+                    </div>
+                </div>
+            </div>
 
-                                                <div id="categoriesSection" class="hidden">
-                                        <div class="section-header">
-                                                <h2 class="section-title">Categorías</h2>
-                                                <button class="btn btn-primary" onclick="addCategory()">+ Agregar
-                            Categoría</button>
-                                            </div>
-                                        <div id="categoriesList">
-                                                                    </div>
-                                    </div>
+            <div class="right-column">
+                <div class="calendar-section card">
+                    <div class="calendar-header">
+                        <button class="calendar-nav" onclick="changeMonth(-1)">‹</button>
+                        <h3 id="calendarTitle"></h3>
+                        <button class="calendar-nav" onclick="changeMonth(1)">›</button>
+                    </div>
+                    <div class="calendar-grid" id="calendarGrid"></div>
+                </div>
+            </div>
+        </div>
+    </main>
 
-                                                <div id="statisticsSection" class="hidden">
-                                        <h2 class="section-title">Estadísticas</h2>
-                                        <div class="stats-grid" id="statsGrid">
-                                                                    </div>
-                                    </div>
-                            </div>
-
-                                    <div class="calendar-section">
-                                <div class="calendar-header">
-                                        <button class="calendar-nav" onclick="changeMonth(-1)">‹</button>
-                                        <h3 id="calendarTitle"></h3>
-                                        <button class="calendar-nav" onclick="changeMonth(1)">›</button>
-                                    </div>
-                                <div class="calendar-grid" id="calendarGrid">
-                                                        </div>
-                                <div class="task-count" id="taskCount">
-                                                        </div>
-                            </div>
-                    </div>
-            </main>
-
-
-       
     <script src="/static/js/index.js"></script>
 </body>
 
