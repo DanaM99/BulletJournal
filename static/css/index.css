@@ -639,7 +639,10 @@ body {
 }
 
 .chart-container {
-    padding: 2rem;
+    width: 300px;   /* más compacto */
+    height: 250px;  /* ajustable */
+    margin: 1rem auto;
+    position: relative;
 }
 
 /* Responsive */
